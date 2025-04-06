@@ -19,8 +19,13 @@
 #include <EncButton.h>
 
 #include "weather_station.h"
-const char* timeZone = "Europe/Belgrade";
-#include "get_real_time_api.h"
+// const char* timeZone = "Europe/Belgrade";
+const char* timezoneStr = "CET-1CEST,M3.5.0/2,M10.5.0/3"; // Belgrade
+const char* ntpServer = "pool.ntp.org";
+const long gmtOffset_sec = 1 * 3600;     // GMT+1 
+const int daylightOffset_sec = 3600;     // Summer time
+struct tm timeinfo;
+#include "get_real_time.h"
 
 
 // #define R_PIN 9 // for RGB led
@@ -65,6 +70,8 @@ uint8_t current_screen = 0; // can be changed for screen debug
 void setup() {
   randomSeed(analogRead(A0));
   Serial.begin(9600);
+  configTzTime(timezoneStr, "pool.ntp.org");
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
   display.begin();
   display.clearBuffer();                  
@@ -86,9 +93,11 @@ void setup() {
     Serial.println("BME280 Error!");
     display.print("[1/5]BME280 Error!");
   } else {
+    Serial.println("[1/5]BME280 is fine.");
     display.print("[1/5]BME280 is fine.");
   }
   display.sendBuffer();
+  delay(1000);
 
   mhz19.begin(RX_PIN, TX_PIN);
   mhz19.setAutoCalibration(false);
@@ -110,25 +119,27 @@ void setup() {
     Serial.println("WiFI Error!");
     display.print("[3/5]WiFI Error!");
   } else {
+    Serial.println("WiFI is connected.");
     display.print("[3/5]WiFI is connected.");
   }
   display.sendBuffer();
+  delay(1000);
 
-
-  String currentTime;
+  // String currentTime;
   display.setCursor(CURSOR_COLUMN_INDEX(0), CURSOR_ROW_INDEX(4));
-  if (!getTimeFromAPI(currentTime)) {
-    Serial.println("Cur. time API Error!");
-    display.print("[4/5]Time API Error!");
+  if(!getTime(timeinfo)){
+    Serial.println("Time sync. Error!");
+    display.print("[4/5]Time sync. Error!");
   } else {
-    Serial.println("Time: " + currentTime);
-    display.print("[4/5]Got time via API.");
-  }  
+    Serial.println("Time is synced.");
+    display.print("[4/5]Time is synced.");
+  }
   display.sendBuffer();
+  delay(1000);
 
   initHistoryBuffers();
   readTempAndHumInside(); // must be after initHistoryBuffers!!!
-  delay(2000);
+  delay(1000);
   display.clear();
   // readCO2(); MH-z19b must warm up! So, the first measurement will be in SENSOR_READ_INTERVAL milsec
   setMainScreen();
@@ -174,5 +185,6 @@ void loop() {
     last_sensor_read_time = now;
     readTempAndHumInside();
     readCO2();
+    getTime(timeinfo);
   }
 }
