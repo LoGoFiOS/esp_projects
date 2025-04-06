@@ -23,11 +23,12 @@ An Arduino-based weather display project using ESP32, CO₂ sensor (MH-Z19B), BM
 - RGB LED (optional)
 
 ## Libs (included)
-GyverBME280@^1.5.3: https://github.com/GyverLibs/GyverBME280
-EncButton@^3.7.2: https://github.com/GyverLibs/EncButton
-GyverOLED@^1.6.4: https://github.com/GyverLibs/GyverOLED
-mhz19_uart@^0.31: https://github.com/nara256/mhz19_uart
-GRGB@^1.4.1: https://github.com/GyverLibs/GRGB
+- GyverBME280@1.5.3: https://github.com/GyverLibs/GyverBME280
+- U8g2@2.36.5: https://github.com/olikraus/u8g2
+- EncButton@3.7.2: https://github.com/GyverLibs/EncButton
+- mhz19_uart@0.3: https://github.com/nara256/mhz19_uart
+- GRGB@1.4.1: https://github.com/GyverLibs/GRGB
+- ArduinoJson@7.3.1: https://github.com/bblanchon/ArduinoJson
 
 ## Wiring
 
