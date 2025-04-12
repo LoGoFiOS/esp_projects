@@ -1,5 +1,4 @@
-#ifndef DISPLAY_HELPER_H
-#define DISPLAY_HELPER_H
+#pragma once
 
 #include <Arduino.h>
 // #include <Wire.h>
@@ -7,6 +6,7 @@
 // #include "weather_codes.h"
 // #include "forecast_data.h"
 #include "history_data.h"
+#include "get_real_time.h"
 // #include <GRGB.h>
 
 // // Display related constants and macros
@@ -26,8 +26,8 @@ extern int8_t cur_t;
 extern int8_t cur_h;
 #define CURSOR_COLUMN_INDEX(col) (col * display_font_w) // get first left-top X coor of col, pixels 0 - 127!!!
 #define CURSOR_ROW_INDEX(row) (display_font_h + row * display_font_h) // get baseline (bottom Y coordinate)
-// extern int16_t cur_co2;
-// extern bool is_display_blinked;
+extern int16_t cur_co2;
+bool is_display_blinked = false;
 
 // extern const uint8_t HIST_DATA_BUFFER_SIZE;
 
@@ -36,10 +36,12 @@ extern int8_t cur_h;
 // void changeScreen();
 
 void setMainScreen();
-// void blinkTimeSeparator();
-// void displayUpdCurrentT(int8_t cur_t);
-// void displayUpdCurrentH(int8_t cur_h);
-// void displayUpdCurrentCO2(int16_t cur_co2);
+void setTime();
+void setDate();
+void blinkTimeSeparator();
+void displayUpdCurrentT();
+void displayUpdCurrentH();
+void displayUpdCurrentCO2();
 
 // void setWeatherForecastScreen(int8_t forecast_id);
 
@@ -79,94 +81,99 @@ void setMainScreen();
 // Set main screen with clock, date, and current conditions
 inline void setMainScreen()
 {
+  setTime();
+  setDate();
+
+  uint8_t shift = 4;
+  display.setCursor(CURSOR_COLUMN_INDEX(1), CURSOR_ROW_INDEX(2) + shift);
+  display.print("In     ");
+  display.print((char)176);
+  display.print("C");
+  display.setCursor(CURSOR_COLUMN_INDEX(12), CURSOR_ROW_INDEX(2) + shift);
+  display.print("Hum   %");
+
+  display.setCursor(CURSOR_COLUMN_INDEX(6), CURSOR_ROW_INDEX(3) + shift);
+  display.print("    ");
+  display.setCursor(CURSOR_COLUMN_INDEX(10), CURSOR_ROW_INDEX(3) + shift);
+  display.print("ppm: ????");
+
+  display.setCursor(CURSOR_COLUMN_INDEX(1), CURSOR_ROW_INDEX(4) + shift + 2);
+  display.print("Out +14");
+  display.print((char)176);
+  display.print("C");
+  display.print(", 3 m/s");
+
+  displayUpdCurrentT();
+  displayUpdCurrentH(); // There is sendBuffer inside
+  displayUpdCurrentCO2();
+}
+
+inline void setTime(){
   display.setFont(u8g2_font_profont22_mf); // w = 12, h = 22
   display_font_w = 12;
   display_font_h = 22;
-  display.setCursor(CURSOR_COLUMN_INDEX(0), CURSOR_ROW_INDEX(0));
-  display.print("22:54");
-  display.sendBuffer();
-  // display.print("initializing...");
-  // display.setCursor(0, CURSOR_ROW_INDEX(2) + 1);
-  // display.print("Wait for 3 min.");
-  // display.setCursor(0, CURSOR_ROW_INDEX(3) + 1);
-  // display.print("CO2 sens. warming up.");
-  // display.sendBuffer(); 
 
+  String hour = getHour();
+  display.setCursor(CURSOR_COLUMN_INDEX(0), CURSOR_ROW_INDEX(0) - 4);
+  display.print(hour);
+
+  String minute = getMinute();
+  display.setCursor(CURSOR_COLUMN_INDEX(3), CURSOR_ROW_INDEX(0) - 4);
+  display.print(minute);
+  display.sendBuffer();
 
   display.setFont(u8g2_font_profont11_mf); // w = 6, h = 11
   display_font_w = 6;
   display_font_h = 11;
-
-
-  // display_font_size = 3;
-  // display.setScale(display_font_size);
-  // display.setCursorXY(CURSOR_X(0), CURSOR_Y(0));
-  // 
-
-  // display_font_size = 1;
-  // display.setScale(display_font_size);
-  // display.setCursorXY(CURSOR_X(16), CURSOR_Y(0));
-  // display.print("30.03");
-  // display.setCursorXY(CURSOR_X(16), CURSOR_Y(2) - 2);
-  // display.print("Sun");
-  // display.setCursorXY(CURSOR_X(1), CURSOR_Y(4));
-
-  // display.print("In     ");
-  // display.print((char)127);
-  // display.print("C");
-  // display.setCursorXY(CURSOR_X(12), CURSOR_Y(4));
-  // display.print("Hum   %");
-
-  // display.setCursorXY(CURSOR_X(5), CURSOR_Y(5)+4);
-  // display.print(cur_co2);
-  // display.setCursorXY(CURSOR_X(9), CURSOR_Y(5)+4);
-  // display.print("ppm: ????");
-  // display.update();
-
-  // display.setCursorXY(CURSOR_X(1), CURSOR_Y(6) + 8);
-  // display.print("Out +14");
-  // display.print((char)127);
-  // display.print("C");
-  // display.print(", 3 m/s");
-
-  // display.update();
-  // displayUpdCurrentT(cur_t);
-  // displayUpdCurrentH(cur_h);
-  // displayUpdCurrentCO2(cur_co2);
 }
 
-// // Blink time separator (colon) function
-// inline void blinkTimeSeparator()
-// {
-//   display_font_size = 3;
-//   display.setScale(display_font_size);
-//   display.setCursorXY(CURSOR_X(2), CURSOR_Y(0));
-//   if (is_display_blinked)
-//   {
-//     display.print(F(":"));
-//   }
-//   else
-//   {
-//     display.print(F(" "));
-//   }
+inline void setDate(){
+  String date = getDate();
+  display.setCursor(CURSOR_COLUMN_INDEX(12), CURSOR_ROW_INDEX(0));
+  display.print(date);
 
-//   display.update();
-//   is_display_blinked = !is_display_blinked;
-//   display_font_size = 1;
-//   display.setScale(display_font_size);
-// }
+  String dayName = getDayName();
+  display.setCursor(CURSOR_COLUMN_INDEX(12), CURSOR_ROW_INDEX(1));
+  display.print(dayName);
+}
 
-inline void displayUpdCurrentT(int8_t cur_t)
+// Blink time separator (colon) function
+inline void blinkTimeSeparator()
+{
+  display.setFont(u8g2_font_profont22_mf); // w = 12, h = 22
+  display_font_w = 12;
+  display_font_h = 22;
+  display.setCursor(CURSOR_COLUMN_INDEX(2), CURSOR_ROW_INDEX(0) - 4);
+  if (is_display_blinked)
+  {
+    display.print(F(":"));
+  }
+  else
+  {
+    display.print(F(" "));
+  }
+
+  display.sendBuffer();
+  is_display_blinked = !is_display_blinked;
+  display.setFont(u8g2_font_profont11_mf); // w = 6, h = 11
+  display_font_w = 6;
+  display_font_h = 11;
+}
+
+inline void displayUpdCurrentT()
 {
   /*
   Format for temperature inside is "In  +25°C"
   When the temperature or humidity is updated the display is has not been fully updated. It is not requirement, we can just update the value
   */
-  // display.setCursorXY(CURSOR_X(5), CURSOR_Y(4));
-  // display.print(cur_t > 0 ? "+" : cur_t < 0 ? "-"
-  //                                           : " ");
-  // int16_t abs_t = abs(cur_t);
 
+  uint8_t shift = 4;
+  display.setCursor(CURSOR_COLUMN_INDEX(5), CURSOR_ROW_INDEX(2) + shift);
+  display.print("   "); // to clear previous value
+  display.setCursor(CURSOR_COLUMN_INDEX(5), CURSOR_ROW_INDEX(2) + shift);
+  display.print(cur_t > 0 ? "+" : cur_t < 0 ? "-"
+                                            : " ");
+  int16_t abs_t = abs(cur_t);
   // Decided to simplify and rejected this method.
   // if (abs_t > 9)
   // {
@@ -179,46 +186,50 @@ inline void displayUpdCurrentT(int8_t cur_t)
   //   display.setCursorXY(CURSOR_X(7), CURSOR_Y(4));
   //   display.print(abs_t);
   // }
-  // display.setCursorXY(CURSOR_X(6), CURSOR_Y(4)); display.print("  "); // to clear previous value
-  // display.setCursorXY(CURSOR_X(6), CURSOR_Y(4));
-  // display.print(abs_t);
-  // display.update();
+  display.setCursor(CURSOR_COLUMN_INDEX(6), CURSOR_ROW_INDEX(2) + shift);
+  display.print(abs_t);
+  display.sendBuffer();
 }
 
-inline void displayUpdCurrentH(int8_t cur_h)
+inline void displayUpdCurrentH()
 {
   // same logic as with temperature in displayUpdCurrentT()
-  // display.setCursorXY(CURSOR_X(16), CURSOR_Y(4)); display.print("  "); // to clear previous value
-  // display.setCursorXY(CURSOR_X(16), CURSOR_Y(4));
-  // display.print(cur_h);
-  // display.update();
+  uint8_t shift = 4;
+  display.setCursor(CURSOR_COLUMN_INDEX(16), CURSOR_ROW_INDEX(2) + shift);
+  display.print("  "); // to clear previous value
+  display.setCursor(CURSOR_COLUMN_INDEX(16), CURSOR_ROW_INDEX(2) + shift);
+  display.print(cur_h);
+  display.sendBuffer();
 }
 
-inline void displayUpdCurrentCO2(int16_t cur_co2)
+inline void displayUpdCurrentCO2()
 {
-  // Serial.print(cur_co2);
-  // display.setCursorXY(CURSOR_X(5), CURSOR_Y(5)+4); display.print("    "); // to clear previous value
-  // display.setCursorXY(CURSOR_X(5), CURSOR_Y(5)+4);
-  // display.print(cur_co2);
-  // display.setCursorXY(CURSOR_X(9), CURSOR_Y(5)+4);
-  // display.print("ppm: ");
-  // if (cur_co2 >= 400 && cur_co2 < 800) {
-  //   display.print("good");
-  //   setRGBColor(85, 255, 200);
-  // } else if (cur_co2 >= 800 && cur_co2 < 1200) {
-  //   display.print("fair");
-  //   setRGBColor(45, 255, 200);
-  // } else if (cur_co2 >= 1200 && cur_co2 < 1800) {
-  //   display.print("poor");
-  //   setRGBColor(20, 255, 200);
-  // } else if (cur_co2 >= 1800 && cur_co2 < 2200) {
-  //   display.print("dang");
-  //   setRGBColor(0, 255, 200);
-  // } else {
-  //   display.print("????");
-  // }
-  
-  // display.update();
+  uint8_t shift = 4;
+  display.setCursor(CURSOR_COLUMN_INDEX(6), CURSOR_ROW_INDEX(3) + shift);
+  display.print("    "); // to clear previous value
+  display.setCursor(CURSOR_COLUMN_INDEX(6), CURSOR_ROW_INDEX(3) + shift);
+  display.print(cur_co2);
+  display.setCursor(CURSOR_COLUMN_INDEX(15), CURSOR_ROW_INDEX(3) + shift);
+  if (cur_co2 >= 400 && cur_co2 < 800) {
+    display.print("good");
+    // setRGBColor(85, 255, 200);
+  } else if (cur_co2 >= 800 && cur_co2 < 1200) {
+    display.print("fair");
+    // setRGBColor(45, 255, 200);
+  } else if (cur_co2 >= 1200 && cur_co2 < 1800) {
+    display.print("poor");
+    // setRGBColor(20, 255, 200);
+  } else if (cur_co2 >= 1800 && cur_co2 < 2200) {
+    display.print("dang");
+    // setRGBColor(0, 255, 200);
+  } else if (cur_co2 >= 2200) {
+    display.setCursor(CURSOR_COLUMN_INDEX(15), CURSOR_ROW_INDEX(3) + 2 + shift);
+    display.print((char)134);display.print((char)134);display.print((char)134);display.print((char)134);
+    // setRGBColor(0, 255, 200);
+  } else {
+    display.print("????");
+  }
+  display.sendBuffer();
 }
 
 // // Change screen function
@@ -386,6 +397,3 @@ inline void displayUpdCurrentCO2(int16_t cur_co2)
 //   drawHistoryGraph(getHumIn_HoursAgo, 100, 0);
 //   display.update();
 // }
-
-
-#endif // DISPLAY_HELPER_H

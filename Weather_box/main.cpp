@@ -1,3 +1,18 @@
+/*
+- One func, one interval to update real time and blink
+- every 24 sync time with NTP
+if (millis() - last_sync_time > 86400000) { // каждые 24 часа
+  NTPSyncTyme();
+  last_sync_time = millis();
+}
+
+
+
+
+*/
+
+
+
 #include <Arduino.h>
 // #include <GRGB.h>
 #include <SPI.h>
@@ -24,7 +39,6 @@ const char* timezoneStr = "CET-1CEST,M3.5.0/2,M10.5.0/3"; // Belgrade
 const char* ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 1 * 3600;     // GMT+1 
 const int daylightOffset_sec = 3600;     // Summer time
-struct tm timeinfo;
 #include "get_real_time.h"
 
 
@@ -33,14 +47,14 @@ struct tm timeinfo;
 // #define B_PIN 11 // for RGB led
 
 
-// display
+// display begin
 #define DISPLAY_SCL 18
 #define DISPLAY_SI 23
 #define DISPLAY_CS 5
 #define DISPLAY_RS 15
 #define DISPLAY_RSE 4
 #define DISPLAY_BACKLIGHT 13 
-
+// display end
 #define SCL 22 // for BME280 
 #define SDA 21 // for BME280 
 #define RX_PIN 16 // BUT "REAL" WIRE FROM RX CONNECTED TO PIN 17!!!
@@ -58,7 +72,9 @@ Button btn_update(BTN_UPDATE_PIN);
 // Timers initialization
 uint32_t last_sensor_read_time = 0;
 uint32_t last_display_blink_time = 0;
-#define DISPLAY_TIME_BLINK_INTERVAL 1000
+uint32_t last_display_datetime_update = 0; // When real time was updated
+const uint16_t DISPLAY_TIME_BLINK_INTERVAL = 1500;
+const uint16_t DISPLAY_DATETIME_UPDATE_INTERVAL = 20000;
 const uint32_t SENSOR_READ_INTERVAL = 5000;//1800000; // every half hour
 
 // display
@@ -70,8 +86,7 @@ uint8_t current_screen = 0; // can be changed for screen debug
 void setup() {
   randomSeed(analogRead(A0));
   Serial.begin(9600);
-  configTzTime(timezoneStr, "pool.ntp.org");
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+  configTzTime(timezoneStr, ntpServer);
 
   display.begin();
   display.clearBuffer();                  
@@ -85,7 +100,7 @@ void setup() {
   display_font_w = 5;
   display_font_h = 10;
   display.setCursor(CURSOR_COLUMN_INDEX(0), CURSOR_ROW_INDEX(0));
-  display.print("[initializing...");
+  display.print("initializing...");
   display.sendBuffer();
 
   display.setCursor(CURSOR_COLUMN_INDEX(0), CURSOR_ROW_INDEX(1));
@@ -127,7 +142,7 @@ void setup() {
 
   // String currentTime;
   display.setCursor(CURSOR_COLUMN_INDEX(0), CURSOR_ROW_INDEX(4));
-  if(!getTime(timeinfo)){
+  if(!NTPSyncTyme()){
     Serial.println("Time sync. Error!");
     display.print("[4/5]Time sync. Error!");
   } else {
@@ -138,11 +153,12 @@ void setup() {
   delay(1000);
 
   initHistoryBuffers();
-  readTempAndHumInside(); // must be after initHistoryBuffers!!!
+  
   delay(1000);
   display.clear();
   // readCO2(); MH-z19b must warm up! So, the first measurement will be in SENSOR_READ_INTERVAL milsec
   setMainScreen();
+  readTempAndHumInside(); // must be after initHistoryBuffers!!!
 }
 
 void loop() {
@@ -158,6 +174,7 @@ void loop() {
   btn_update.tick();
   if (btn_update.click()) {
     Serial.println("btn_update");
+    // printTime();
   //   switch (current_screen)
   //   {
   //   case 5:
@@ -173,11 +190,19 @@ void loop() {
   }
 
   // Blink time colon on main screen
-  // if ((current_screen == 0) && (now - last_display_blink_time >= DISPLAY_TIME_BLINK_INTERVAL))
-  // {
-  //   last_display_blink_time = now;
-  //   blinkTimeSeparator();
-  // }
+  if ((current_screen == 0) && (now - last_display_blink_time >= DISPLAY_TIME_BLINK_INTERVAL))
+  {
+    last_display_blink_time = now;
+    blinkTimeSeparator();
+  }
+
+  // Update real time colon on main screen
+  if ((current_screen == 0) && (now - last_display_datetime_update >= DISPLAY_DATETIME_UPDATE_INTERVAL))
+  {
+    last_display_datetime_update = now;
+    setTime();
+    setDate();
+  }
 
   // Read sensors at regular intervals
   if (now - last_sensor_read_time >= SENSOR_READ_INTERVAL)
@@ -185,6 +210,6 @@ void loop() {
     last_sensor_read_time = now;
     readTempAndHumInside();
     readCO2();
-    getTime(timeinfo);
+    // NTPSyncTyme();
   }
 }

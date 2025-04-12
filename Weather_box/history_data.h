@@ -1,4 +1,4 @@
-// #pragma once
+#pragma once
 #include <Arduino.h>
 
 const uint8_t HIST_DATA_BUFFER_SIZE = 24;

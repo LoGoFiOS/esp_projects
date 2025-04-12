@@ -1,5 +1,4 @@
-#ifndef FORECAST_DATA_H
-#define FORECAST_DATA_H
+#pragma once
 
 #include <Arduino.h>
 
@@ -94,5 +93,3 @@ inline void getWeekDay(char* buffer, uint8_t index) {
 //   memcpy_P(&f, &forecast[index], sizeof(WeatherForecast));
 //   return f.weatherCode;
 // }
-
-#endif // FORECAST_DATA_H

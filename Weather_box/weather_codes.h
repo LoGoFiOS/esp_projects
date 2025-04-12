@@ -1,5 +1,4 @@
-#ifndef WEATHER_CODES_H
-#define WEATHER_CODES_H
+#pragma once
 
 #include <Arduino.h>
 
@@ -164,5 +163,3 @@ inline void getWeatherDescription(char *buffer, int16_t weatherCode)
 //     buffer[14] = '\0'; // Ensure null termination
 //   }
 // }
-
-#endif // WEATHER_CODES_H

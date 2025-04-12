@@ -1,35 +1,73 @@
+#pragma once
+
 #include <WiFi.h>
 #include <time.h>
 // #include <HTTPClient.h>
 // #include <ArduinoJson.h>
 
-#include "secrets_real.h" // TODO: change to secrets.h in the end!!!
+#include "secrets.h" // TODO: change to secrets.h in the end!!!
 
 
 extern const char* ssid;
 extern const char* password;
 // extern struct tm timeinfo;
 
+
 // extern const char* timeZone;
 // extern const char* rootCACert;
 
-void printTime(struct tm timeinfo){
-
-  char timeStr[6];
-  strftime(timeStr, sizeof(timeStr), "%H:%M", &timeinfo);
-  Serial.print("Time: ");
-  Serial.println(timeStr);
-
-  char dateStr[11];
-  strftime(dateStr, sizeof(dateStr), "%d.%m.%Y", &timeinfo);
-  Serial.print("Date: ");
-  Serial.println(dateStr);
-
-  char dayStr[10];
-  strftime(dayStr, sizeof(dayStr), "%a", &timeinfo); 
-  Serial.print("Day: ");
-  Serial.println(dayStr);
+String getHour() {
+  struct tm now;
+  getLocalTime(&now);
+  char buf[3];
+  strftime(buf, sizeof(buf), "%H", &now);
+  // Serial.print("Hour: "); Serial.print(buf);
+  return String(buf);
 }
+
+String getMinute() {
+  struct tm now;
+  getLocalTime(&now);
+  char buf[3];
+  strftime(buf, sizeof(buf), "%M", &now);
+  // Serial.print(", Minute: "); Serial.println(buf);
+  return String(buf);
+}
+
+String getDate() {
+  struct tm now;
+  getLocalTime(&now);
+  char buf[7];
+  strftime(buf, sizeof(buf), "%d.%m", &now);
+  return String(buf);
+}
+
+String getDayName() {
+  struct tm now;
+  getLocalTime(&now);
+  char buf[4];
+  strftime(buf, sizeof(buf), "%a", &now);
+  return String(buf);
+}
+
+// void printTime(){
+//   struct tm now;
+//   getLocalTime(&now);
+//   char buf[9];
+//   strftime(buf, sizeof(buf), "%H:%M:%S", &now);
+//   Serial.print("Time: ");
+//   Serial.println(buf);
+
+//   char dateStr[11];
+//   strftime(dateStr, sizeof(dateStr), "%d.%m.%Y", &now);
+//   Serial.print("Date: ");
+//   Serial.println(dateStr);
+
+//   char dayStr[4];
+//   strftime(dayStr, sizeof(dayStr), "%a", &now); 
+//   Serial.print("Day: ");
+//   Serial.println(dayStr);
+// }
 
 bool connectToWiFi() {
     Serial.print("Connecting to Wi-Fi");
@@ -52,10 +90,11 @@ bool connectToWiFi() {
     }
   }
 
-bool getTime(struct tm& timeinfo, uint16_t maxAttempts = 20, uint16_t delayMs = 500) {
+bool NTPSyncTyme(uint16_t maxAttempts = 20, uint16_t delayMs = 500) {
+  struct tm now;
   for (int i = 0; i < maxAttempts; i++) {
-    if (getLocalTime(&timeinfo)) {
-      printTime(timeinfo);
+    if (getLocalTime(&now)) {
+      // printTime(timeinfo);
       return true;
     }
     delay(delayMs);
@@ -66,7 +105,7 @@ bool getTime(struct tm& timeinfo, uint16_t maxAttempts = 20, uint16_t delayMs = 
 
 
 
-//   bool getTimeFromAPI(String& outTime) {
+//   bool NTPSyncTymeFromAPI(String& outTime) {
 //     if (WiFi.status() != WL_CONNECTED) {
 //       outTime = "No WiFi";
 //       return false;

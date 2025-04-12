@@ -16,7 +16,6 @@ extern MHZ19_uart mhz19;
 int8_t cur_t = 0;
 int8_t cur_h = 0;
 int16_t cur_co2 = 0;
-// bool is_display_blinked = false;
 
 // Function to read temperature and humidity from BME280
 inline void readTempAndHumInside()
@@ -32,9 +31,9 @@ inline void readTempAndHumInside()
 
   // Update display if values changed
   if (!isnan(cur_t) && (prev_t != cur_t) && (current_screen == 0))
-    displayUpdCurrentT(cur_t);
+    displayUpdCurrentT();
   if (!isnan(cur_h) && (prev_h != cur_h) && (current_screen == 0))
-    displayUpdCurrentH(cur_h);
+    displayUpdCurrentH();
 }
 
 inline void readCO2(){
@@ -42,9 +41,9 @@ inline void readCO2(){
   cur_co2 = mhz19.getCO2PPM(); // values 400...5000
   // Serial.println(cur_co2); // debug
   addCO2(cur_co2);
-  // if (!isnan(cur_co2) && (cur_co2 != prev_co2) && (current_screen == 0)){
-  //   displayUpdCurrentCO2(cur_co2);
-  // }
+  if (!isnan(cur_co2) && (cur_co2 != prev_co2) && (current_screen == 0)){
+    displayUpdCurrentCO2();
+  }
 }
 
 // Function to check available RAM
